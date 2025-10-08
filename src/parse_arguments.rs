@@ -6,6 +6,7 @@ pub enum ArgumentCommand {
     Edit,
     Check,
     Update,
+    Report,
 }
 
 #[derive(Debug)]
@@ -78,6 +79,7 @@ pub fn parse_arguments(raw_arguments: Vec<String>) -> Result<Arguments, String> 
                 "edit" => Some(ArgumentCommand::Edit),
                 "check" => Some(ArgumentCommand::Check),
                 "update" => Some(ArgumentCommand::Update),
+                "report" => Some(ArgumentCommand::Report),
                 _ => None,
             };
             match command {
@@ -130,6 +132,13 @@ pub fn parse_arguments(raw_arguments: Vec<String>) -> Result<Arguments, String> 
             if arguments.allow_hidden.is_some() {
                 return Err(String::from(
                     "The update command cannot accept the -h or -d flags.",
+                ));
+            }
+        }
+        ArgumentCommand::Report => {
+            if arguments.allow_hidden.is_some() || arguments.is_forced {
+                return Err(String::from(
+                    "The report command cannot accept any of the following flags: -h -d -f",
                 ));
             }
         }

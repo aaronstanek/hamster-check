@@ -11,9 +11,7 @@ pub enum ArgumentCommand {
 #[derive(Debug)]
 pub struct Arguments {
     command: ArgumentCommand,
-    target_paths: Vec<String>,
-    add_paths: Vec<String>,
-    remove_paths: Vec<String>,
+    target_path: Option<String>,
     allow_hidden: Option<bool>,
     is_verbose: bool,
     is_forced: bool,
@@ -22,9 +20,7 @@ pub struct Arguments {
 pub fn parse_arguments(raw_arguments: Vec<String>) -> Result<Arguments, String> {
     let mut arguments = Arguments {
         command: ArgumentCommand::Help,
-        target_paths: vec![],
-        add_paths: vec![],
-        remove_paths: vec![],
+        target_path: None,
         allow_hidden: None,
         is_verbose: false,
         is_forced: false,
@@ -32,22 +28,12 @@ pub fn parse_arguments(raw_arguments: Vec<String>) -> Result<Arguments, String> 
 
     let mut is_argument_term_possibly_a_flag = true;
     let mut is_command_set = false;
-    let mut is_adding_path = false;
-    let mut is_removing_path = false;
 
     for argument_term in raw_arguments.into_iter().skip(1) {
         if is_argument_term_possibly_a_flag && argument_term.starts_with("-") {
             match argument_term.as_str() {
                 "--" => {
                     is_argument_term_possibly_a_flag = false;
-                }
-                "-a" => {
-                    is_adding_path = true;
-                    is_removing_path = false;
-                }
-                "-r" => {
-                    is_adding_path = false;
-                    is_removing_path = true;
                 }
                 "-h" => match arguments.allow_hidden {
                     Some(_) => {
@@ -106,76 +92,44 @@ pub fn parse_arguments(raw_arguments: Vec<String>) -> Result<Arguments, String> 
             continue;
         }
 
-        if is_adding_path {
-            arguments.add_paths.push(argument_term);
-        } else if is_removing_path {
-            arguments.remove_paths.push(argument_term);
-        } else {
-            arguments.target_paths.push(argument_term);
+        if arguments.target_path.is_none() {
+            arguments.target_path = Some(argument_term);
+            continue;
         }
+
+        return Err(format!("Unexpected parameter: {}", argument_term));
     }
 
     match arguments.command {
         ArgumentCommand::Help => {}
         ArgumentCommand::Init => {
-            if arguments.target_paths.len() < 2 {
-                return Err(String::from("init command must be followed by at least 2 paths. The first is the path to the config file to be created. The second is the path to the content to archive."));
-            }
-            if is_adding_path || is_removing_path || arguments.is_forced {
-                return Err(String::from(
-                    "The init command cannot accept any of the following flags: -a -r -f",
-                ));
+            if arguments.is_forced {
+                return Err(String::from("The init command cannot accept the -f flag."));
             }
         }
         ArgumentCommand::About => {
-            if arguments.target_paths.len() != 1 {
-                return Err(String::from("about command must be followed by exactly one path. This path should correspond to a config file."));
-            }
-            if is_adding_path
-                || is_removing_path
-                || arguments.allow_hidden.is_some()
-                || arguments.is_forced
-            {
+            if arguments.allow_hidden.is_some() || arguments.is_forced {
                 return Err(String::from(
-                    "The about command cannot accept any of the following flags: -a -r -h -d -f",
+                    "The about command cannot accept any of the following flags: -h -d -f",
                 ));
             }
         }
         ArgumentCommand::Edit => {
-            if arguments.target_paths.len() != 1 {
-                return Err(String::from("edit command must be followed by exactly one path. This path should correspond to a config file."));
-            }
-            if arguments.add_paths.len() == 0
-                && arguments.remove_paths.len() == 0
-                && arguments.allow_hidden.is_none()
-            {
-                return Err(String::from("edit command must make an edit to a config file. Valid edits are adding a source path, removing a source path, and allowing/disallowing hidden files."));
-            }
             if arguments.is_forced {
                 return Err(String::from("The edit command cannot accept the -f flag"));
             }
         }
         ArgumentCommand::Check => {
-            if arguments.target_paths.len() != 1 {
-                return Err(String::from("check command must be followed by exactly one path. This path should correspond to a config file."));
-            }
-            if is_adding_path
-                || is_removing_path
-                || arguments.allow_hidden.is_some()
-                || arguments.is_forced
-            {
+            if arguments.allow_hidden.is_some() || arguments.is_forced {
                 return Err(String::from(
-                    "The check command cannot accept any of the following flags: -a -r -h -d -f",
+                    "The check command cannot accept any of the following flags: -h -d -f",
                 ));
             }
         }
         ArgumentCommand::Update => {
-            if arguments.target_paths.len() != 1 {
-                return Err(String::from("update command must be followed by exactly one path. This path should correspond to a config file."));
-            }
-            if is_adding_path || is_removing_path || arguments.allow_hidden.is_some() {
+            if arguments.allow_hidden.is_some() {
                 return Err(String::from(
-                    "The check command cannot accept any of the following flags: -a -r -h -d",
+                    "The update command cannot accept the -h or -d flags.",
                 ));
             }
         }

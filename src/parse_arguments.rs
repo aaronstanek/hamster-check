@@ -117,10 +117,24 @@ pub fn parse_arguments(raw_arguments: Vec<String>) -> Result<Arguments, String> 
             if arguments.target_paths.len() < 2 {
                 return Err(String::from("init command must be followed by at least 2 paths. The first is the path to the config file to be created. The second is the path to the content to archive."));
             }
+            if is_adding_path || is_removing_path || arguments.is_forced {
+                return Err(String::from(
+                    "The init command cannot accept any of the following flags: -a -r -f",
+                ));
+            }
         }
         ArgumentCommand::About => {
             if arguments.target_paths.len() != 1 {
                 return Err(String::from("about command must be followed by exactly one path. This path should correspond to a config file."));
+            }
+            if is_adding_path
+                || is_removing_path
+                || arguments.allow_hidden.is_some()
+                || arguments.is_forced
+            {
+                return Err(String::from(
+                    "The about command cannot accept any of the following flags: -a -r -h -d -f",
+                ));
             }
         }
         ArgumentCommand::Edit => {
@@ -133,15 +147,32 @@ pub fn parse_arguments(raw_arguments: Vec<String>) -> Result<Arguments, String> 
             {
                 return Err(String::from("edit command must make an edit to a config file. Valid edits are adding a source path, removing a source path, and allowing/disallowing hidden files."));
             }
+            if arguments.is_forced {
+                return Err(String::from("The edit command cannot accept the -f flag"));
+            }
         }
         ArgumentCommand::Check => {
             if arguments.target_paths.len() != 1 {
                 return Err(String::from("check command must be followed by exactly one path. This path should correspond to a config file."));
             }
+            if is_adding_path
+                || is_removing_path
+                || arguments.allow_hidden.is_some()
+                || arguments.is_forced
+            {
+                return Err(String::from(
+                    "The check command cannot accept any of the following flags: -a -r -h -d -f",
+                ));
+            }
         }
         ArgumentCommand::Update => {
             if arguments.target_paths.len() != 1 {
                 return Err(String::from("update command must be followed by exactly one path. This path should correspond to a config file."));
+            }
+            if is_adding_path || is_removing_path || arguments.allow_hidden.is_some() {
+                return Err(String::from(
+                    "The check command cannot accept any of the following flags: -a -r -h -d",
+                ));
             }
         }
     }

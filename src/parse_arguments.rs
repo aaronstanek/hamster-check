@@ -30,13 +30,17 @@ pub fn parse_arguments(raw_arguments: Vec<String>) -> Result<Arguments, String> 
         is_forced: false,
     };
 
+    let mut is_argument_term_possibly_a_flag = true;
     let mut is_command_set = false;
     let mut is_adding_path = false;
     let mut is_removing_path = false;
 
     for argument_term in raw_arguments.into_iter().skip(1) {
-        if argument_term.starts_with("-") {
+        if is_argument_term_possibly_a_flag && argument_term.starts_with("-") {
             match argument_term.as_str() {
+                "--" => {
+                    is_argument_term_possibly_a_flag = false;
+                }
                 "-a" => {
                     is_adding_path = true;
                     is_removing_path = false;

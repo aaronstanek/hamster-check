@@ -35,28 +35,6 @@ pub fn parse_arguments(raw_arguments: Vec<String>) -> Result<Arguments, String> 
     let mut is_removing_path = false;
 
     for argument_term in raw_arguments.into_iter().skip(1) {
-        if !is_command_set {
-            let command: Option<ArgumentCommand> = match argument_term.as_str() {
-                "help" => Some(ArgumentCommand::Help),
-                "init" => Some(ArgumentCommand::Init),
-                "about" => Some(ArgumentCommand::About),
-                "edit" => Some(ArgumentCommand::Edit),
-                "check" => Some(ArgumentCommand::Check),
-                "update" => Some(ArgumentCommand::Update),
-                _ => None,
-            };
-            match command {
-                Some(x) => {
-                    arguments.command = x;
-                    is_command_set = true;
-                }
-                None => {
-                    return Err(format!("Unknown command: {}", argument_term));
-                }
-            }
-            continue;
-        }
-
         if argument_term.starts_with("-") {
             match argument_term.as_str() {
                 "-a" => {
@@ -97,6 +75,28 @@ pub fn parse_arguments(raw_arguments: Vec<String>) -> Result<Arguments, String> 
                 }
                 _ => {
                     return Err(format!("Unknown flag: {}", argument_term));
+                }
+            }
+            continue;
+        }
+
+        if !is_command_set {
+            let command: Option<ArgumentCommand> = match argument_term.as_str() {
+                "help" => Some(ArgumentCommand::Help),
+                "init" => Some(ArgumentCommand::Init),
+                "about" => Some(ArgumentCommand::About),
+                "edit" => Some(ArgumentCommand::Edit),
+                "check" => Some(ArgumentCommand::Check),
+                "update" => Some(ArgumentCommand::Update),
+                _ => None,
+            };
+            match command {
+                Some(x) => {
+                    arguments.command = x;
+                    is_command_set = true;
+                }
+                None => {
+                    return Err(format!("Unknown command: {}", argument_term));
                 }
             }
             continue;

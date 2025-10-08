@@ -60,65 +60,29 @@ pub fn parse_arguments(raw_arguments: Vec<String>) -> Result<Arguments, String> 
         if argument_term.starts_with("-") {
             match argument_term.as_str() {
                 "-a" => {
-                    match arguments.command {
-                        ArgumentCommand::Help | ArgumentCommand::Edit => {}
-                        _ => {
-                            return Err(String::from(
-                                "-a flag may only be used with the edit command",
-                            ));
-                        }
-                    }
                     is_adding_path = true;
                     is_removing_path = false;
                 }
                 "-r" => {
-                    match arguments.command {
-                        ArgumentCommand::Help | ArgumentCommand::Edit => {}
-                        _ => {
-                            return Err(String::from(
-                                "-r flag may only be used with the edit command",
-                            ));
-                        }
-                    }
                     is_adding_path = false;
                     is_removing_path = true;
                 }
-                "-h" => {
-                    match arguments.command {
-                        ArgumentCommand::Help | ArgumentCommand::Init | ArgumentCommand::Edit => {}
-                        _ => {
-                            return Err(String::from(
-                                "-h flag may only be used with the init and edit commands",
-                            ));
-                        }
+                "-h" => match arguments.allow_hidden {
+                    Some(_) => {
+                        return Err(String::from("Allow-hidden flag set multiple times"));
                     }
-                    match arguments.allow_hidden {
-                        Some(_) => {
-                            return Err(String::from("Allow-hidden flag set multiple times"));
-                        }
-                        None => {
-                            arguments.allow_hidden = Some(true);
-                        }
+                    None => {
+                        arguments.allow_hidden = Some(true);
                     }
-                }
-                "-d" => {
-                    match arguments.command {
-                        ArgumentCommand::Help | ArgumentCommand::Init | ArgumentCommand::Edit => {}
-                        _ => {
-                            return Err(String::from(
-                                "-d flag may only be used with the init and edit commands",
-                            ));
-                        }
+                },
+                "-d" => match arguments.allow_hidden {
+                    Some(_) => {
+                        return Err(String::from("Allow-hidden flag set multiple times"));
                     }
-                    match arguments.allow_hidden {
-                        Some(_) => {
-                            return Err(String::from("Allow-hidden flag set multiple times"));
-                        }
-                        None => {
-                            arguments.allow_hidden = Some(false);
-                        }
+                    None => {
+                        arguments.allow_hidden = Some(false);
                     }
-                }
+                },
                 "-v" => {
                     if arguments.is_verbose {
                         return Err(String::from("Verbose flag set multiple times"));
@@ -126,14 +90,6 @@ pub fn parse_arguments(raw_arguments: Vec<String>) -> Result<Arguments, String> 
                     arguments.is_verbose = true;
                 }
                 "-f" => {
-                    match arguments.command {
-                        ArgumentCommand::Help | ArgumentCommand::Update => {}
-                        _ => {
-                            return Err(String::from(
-                                "-f flag may only be used with the update command",
-                            ));
-                        }
-                    }
                     if arguments.is_forced {
                         return Err(String::from("Force flag set multiple times"));
                     }
